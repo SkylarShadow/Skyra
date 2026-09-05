@@ -5,6 +5,8 @@
 #include "Engine/LocalPlayer.h"
 #include "CommonUserTypes.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(CommonUserBasicPresence)
+
 
 #if COMMONUSER_OSSV1
 #include "OnlineSubsystemUtils.h"
@@ -78,6 +80,7 @@ void UCommonUserBasicPresence::OnNotifySessionInformationChanged(ECommonSessionI
 			if(Presence)
 			{
 				FOnlineUserPresenceStatus UpdatedPresence;
+				UpdatedPresence.State = EOnlinePresenceState::Online; // We'll only send the presence update if the user has a valid UniqueNetId, so we can assume they are Online
 				UpdatedPresence.StatusStr = *SessionStateToBackendKey(SessionStatus);
 				UpdatedPresence.Properties.Emplace(PresenceKeyGameMode, GameMode);
 				UpdatedPresence.Properties.Emplace(PresenceKeyMapName, MapNameTruncated);
@@ -106,8 +109,8 @@ void UCommonUserBasicPresence::OnNotifySessionInformationChanged(ECommonSessionI
 					UE::Online::FPartialUpdatePresence::Params UpdateParams;
 					UpdateParams.LocalAccountId = LocalPlayer->GetPreferredUniqueNetId().GetV2();
 					UpdateParams.Mutations.StatusString.Emplace(*SessionStateToBackendKey(SessionStatus));
-					UpdateParams.Mutations.UpdatedProperties.Emplace(PresenceKeyGameMode, GameMode);
-					UpdateParams.Mutations.UpdatedProperties.Emplace(PresenceKeyMapName, MapNameTruncated);
+					UpdateParams.Mutations.UpdatedProperties.AddVariant(PresenceKeyGameMode, GameMode);
+					UpdateParams.Mutations.UpdatedProperties.AddVariant(PresenceKeyMapName, MapNameTruncated);
 
 					Presence->PartialUpdatePresence(MoveTemp(UpdateParams));
 				}
