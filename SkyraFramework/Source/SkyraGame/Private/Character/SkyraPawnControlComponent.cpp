@@ -3,7 +3,6 @@
 #include "SkyraPawnControlComponent.h"
 #include "Components/GameFrameworkComponentDelegates.h"
 #include "Logging/MessageLog.h"
-#include "Input/SkyraMappableConfigPair.h"
 #include "SkyraLogChannels.h"
 #include "EnhancedInputSubsystems.h"
 #include "Player/SkyraPlayerController.h"

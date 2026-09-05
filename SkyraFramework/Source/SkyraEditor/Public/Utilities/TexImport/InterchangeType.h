@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
+#include "Engine/Texture.h"
 #include "UObject/Object.h"
 #include "InterchangeType.generated.h"
 
@@ -13,7 +14,7 @@ struct FInterchangeTexture
 	FString Path;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TEnumAsByte<TextureGroup> LODGroup;
+	TEnumAsByte<TextureGroup> LODGroup = TEXTUREGROUP_World;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FTextureSourceColorSettings SourceColorSettings;

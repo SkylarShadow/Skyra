@@ -2,16 +2,14 @@
 
 #include "SkyraSettingsLocal.h"
 #include "Engine/Engine.h"
-#include "EnhancedActionKeyMapping.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Engine/World.h"
 #include "Misc/App.h"
 #include "CommonInputSubsystem.h"
 #include "GenericPlatform/GenericPlatformFramePacer.h"
 #include "Player/SkyraLocalPlayer.h"
+#include "Performance/LatencyMarkerModule.h"
 #include "Performance/SkyraPerformanceStatTypes.h"
-#include "PlayerMappableInputConfig.h"
-#include "EnhancedInputSubsystems.h"
 #include "ICommonUIModule.h"
 #include "CommonUISettings.h"
 #include "SoundControlBusMix.h"
@@ -25,11 +23,16 @@
 #include "AudioModulationStatics.h"
 #include "Audio/SkyraAudioSettings.h"
 #include "Audio/SkyraAudioMixEffectsSubsystem.h"
-#include "EnhancedActionKeyMapping.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(SkyraSettingsLocal)
 
 UE_DEFINE_GAMEPLAY_TAG_STATIC(TAG_Platform_Trait_BinauralSettingControlledByOS, "Platform.Trait.BinauralSettingControlledByOS");
+
+namespace PerfStatTags
+{
+	UE_DEFINE_GAMEPLAY_TAG_STATIC(TAG_Platform_Trait_SupportsLatencyStats, "Platform.Trait.SupportsLatencyStats");
+	UE_DEFINE_GAMEPLAY_TAG_STATIC(TAG_Platform_Trait_SupportsLatencyMarkers, "Platform.Trait.SupportsLatencyMarkers");
+}
 
 //////////////////////////////////////////////////////////////////////
 
@@ -335,7 +338,6 @@ namespace SkyraSettingsHelpers
 
 //////////////////////////////////////////////////////////////////////
 
-PRAGMA_DISABLE_DEPRECATION_WARNINGS
 USkyraSettingsLocal::USkyraSettingsLocal()
 {
 	if (!HasAnyFlags(RF_ClassDefaultObject) && FSlateApplication::IsInitialized())
@@ -343,9 +345,10 @@ USkyraSettingsLocal::USkyraSettingsLocal()
 		OnApplicationActivationStateChangedHandle = FSlateApplication::Get().OnApplicationActivationStateChanged().AddUObject(this, &ThisClass::OnAppActivationStateChanged);
 	}
 
+	bEnableScalabilitySettings = USkyraPlatformSpecificRenderingSettings::Get()->bSupportsGranularVideoQualitySettings;
+
 	SetToDefaults();
 }
-PRAGMA_ENABLE_DEPRECATION_WARNINGS
 
 void USkyraSettingsLocal::SetToDefaults()
 {
@@ -354,6 +357,7 @@ void USkyraSettingsLocal::SetToDefaults()
 	bUseHeadphoneMode = false;
 	bUseHDRAudioMode = false;
 	bSoundControlBusMixLoaded = false;
+	bEnableLatencyTrackingStats = USkyraSettingsLocal::DoesPlatformSupportLatencyTrackingStats();
 
 	const USkyraPlatformSpecificRenderingSettings* PlatformSettings = USkyraPlatformSpecificRenderingSettings::Get();
 	UserChosenDeviceProfileSuffix = PlatformSettings->DefaultDeviceProfileSuffix;
@@ -382,6 +386,7 @@ void USkyraSettingsLocal::LoadSettings(bool bForceReload)
 	bDesiredHeadphoneMode = bUseHeadphoneMode;
 	SetHeadphoneModeEnabled(bUseHeadphoneMode);
 
+	ApplyLatencyTrackingStatSetting();
 
 	DesiredUserChosenDeviceProfileSuffix = UserChosenDeviceProfileSuffix;
 
@@ -580,6 +585,67 @@ void USkyraSettingsLocal::SetPerfStatDisplayState(ESkyraDisplayablePerformanceSt
 		DisplayStatList.FindOrAdd(Stat) = DisplayMode;
 	}
 	PerfStatSettingsChangedEvent.Broadcast();
+}
+
+bool USkyraSettingsLocal::DoesPlatformSupportLatencyMarkers()
+{
+	return ICommonUIModule::GetSettings().GetPlatformTraits().HasTag(PerfStatTags::TAG_Platform_Trait_SupportsLatencyMarkers);
+}
+
+void USkyraSettingsLocal::SetEnableLatencyFlashIndicators(const bool bNewVal)
+{
+	if (bNewVal != bEnableLatencyFlashIndicators)
+	{
+		bEnableLatencyFlashIndicators = bNewVal;
+		LatencyFlashInidicatorSettingsChangedEvent.Broadcast();
+	}	
+}
+
+void USkyraSettingsLocal::SetEnableLatencyTrackingStats(const bool bNewVal)
+{
+	if (bNewVal != bEnableLatencyTrackingStats)
+	{
+		bEnableLatencyTrackingStats = bNewVal;
+
+		ApplyLatencyTrackingStatSetting();
+
+		LatencyStatIndicatorSettingsChangedEvent.Broadcast();
+	}
+}
+
+void USkyraSettingsLocal::ApplyLatencyTrackingStatSetting()
+{
+	// Since this function will be called on load of the settings, we check if the slate app is initalized.
+	// If it isn't then we are not in a target which can even have latency stats (like a headless cooker) so we
+	// will exit early and do nothing.
+	if (!FSlateApplication::IsInitialized())
+	{
+		return;
+	}
+	
+	// Don't bother doing anything if the platform doesn't even support tracking stats.
+	if (!DoesPlatformSupportLatencyTrackingStats())
+	{
+		return;
+	}
+	
+	// Actually enable or disable the latency marker modules based on this setting
+	TArray<ILatencyMarkerModule*> LatencyMarkerModules = IModularFeatures::Get().GetModularFeatureImplementations<ILatencyMarkerModule>(ILatencyMarkerModule::GetModularFeatureName());
+	for (ILatencyMarkerModule* LatencyMarkerModule : LatencyMarkerModules)
+	{
+		LatencyMarkerModule->SetEnabled(bEnableLatencyTrackingStats);
+	}
+
+	UE_CLOG(!LatencyMarkerModules.IsEmpty(),
+		LogConsoleResponse,
+		Log,
+		TEXT("%s %d Latency Marker Module(s)"),
+		bEnableLatencyTrackingStats ? TEXT("Enabled") : TEXT("Disabled"), LatencyMarkerModules.Num());
+}
+
+bool USkyraSettingsLocal::DoesPlatformSupportLatencyTrackingStats()
+{
+	return ICommonUIModule::GetSettings().GetPlatformTraits().HasTag(PerfStatTags::TAG_Platform_Trait_SupportsLatencyStats);
 }
 
 float USkyraSettingsLocal::GetDisplayGamma() const
@@ -923,6 +989,7 @@ void USkyraSettingsLocal::RunAutoBenchmark(bool bSaveImmediately)
 	
 	// Always apply, optionally save
 	ApplyScalabilitySettings();
+	ApplyLatencyTrackingStatSetting();
 
 	if (bSaveImmediately)
 	{
@@ -1269,168 +1336,6 @@ FName USkyraSettingsLocal::GetControllerPlatform() const
 	return ControllerPlatform;
 }
 
-PRAGMA_DISABLE_DEPRECATION_WARNINGS
-
-void USkyraSettingsLocal::RegisterInputConfig(ECommonInputType Type, const UPlayerMappableInputConfig* NewConfig, const bool bIsActive)
-{
-	if (NewConfig)
-	{
-		const int32 ExistingConfigIdx = RegisteredInputConfigs.IndexOfByPredicate( [&NewConfig](const FLoadedMappableConfigPair& Pair) { return Pair.Config == NewConfig; } );
-		if (ExistingConfigIdx == INDEX_NONE)
-		{
-			const int32 NumAdded = RegisteredInputConfigs.Add(FLoadedMappableConfigPair(NewConfig, Type, bIsActive));
-			if (NumAdded != INDEX_NONE)
-			{
-				OnInputConfigRegistered.Broadcast(RegisteredInputConfigs[NumAdded]);
-			}	
-		}
-	}
-}
-
-int32 USkyraSettingsLocal::UnregisterInputConfig(const UPlayerMappableInputConfig* ConfigToRemove)
-{
-	if (ConfigToRemove)
-	{
-		const int32 Index = RegisteredInputConfigs.IndexOfByPredicate( [&ConfigToRemove](const FLoadedMappableConfigPair& Pair) { return Pair.Config == ConfigToRemove; } );
-		if (Index != INDEX_NONE)
-		{
-			RegisteredInputConfigs.RemoveAt(Index);
-			return 1;
-		}
-			
-	}
-	return INDEX_NONE;
-}
-
-const UPlayerMappableInputConfig* USkyraSettingsLocal::GetInputConfigByName(FName ConfigName) const
-{
-	for (const FLoadedMappableConfigPair& Pair : RegisteredInputConfigs)
-	{
-		if (Pair.Config->GetConfigName() == ConfigName)
-		{
-			return Pair.Config;
-		}
-	}
-	return nullptr;
-}
-
-void USkyraSettingsLocal::GetRegisteredInputConfigsOfType(ECommonInputType Type, TArray<FLoadedMappableConfigPair>& OutArray) const
-{
-	OutArray.Empty();
-
-	// If "Count" is passed in then 
-	if (Type == ECommonInputType::Count)
-	{
-		OutArray = RegisteredInputConfigs;
-		return;
-	}
-	
-	for (const FLoadedMappableConfigPair& Pair : RegisteredInputConfigs)
-	{
-		if (Pair.Type == Type)
-		{
-			OutArray.Emplace(Pair);
-		}
-	}
-}
-
-void USkyraSettingsLocal::GetAllMappingNamesFromKey(const FKey InKey, TArray<FName>& OutActionNames)
-{
-	if (InKey == EKeys::Invalid)
-	{
-		return;
-	}
-
-	// adding any names of actions that are bound to that key
-	for (const FLoadedMappableConfigPair& Pair : RegisteredInputConfigs)
-	{
-		if (Pair.Type == ECommonInputType::MouseAndKeyboard)
-		{
-			for (const FEnhancedActionKeyMapping& Mapping : Pair.Config->GetPlayerMappableKeys())
-			{
-				FName MappingName(Mapping.GetDisplayName().ToString());
-				FName ActionName = Mapping.GetMappingName();
-				// make sure it isn't custom bound as well
-				if (const FKey* MappingKey = CustomKeyboardConfig.Find(ActionName))
-				{
-					if (*MappingKey == InKey)
-					{
-						OutActionNames.Add(MappingName);
-					}
-				}
-				else
-				{
-					if (Mapping.Key == InKey)
-					{
-						OutActionNames.Add(MappingName);
-					}
-				}
-			}
-		}
-	}
-}
-
-void USkyraSettingsLocal::AddOrUpdateCustomKeyboardBindings(const FName MappingName, const FKey NewKey, USkyraLocalPlayer* LocalPlayer)
-{
-	if (MappingName == NAME_None)
-	{
-		return;
-	}
-	
-	if (InputConfigName != TEXT("Custom"))
-	{
-		// Copy Presets.
-		if (const UPlayerMappableInputConfig* DefaultConfig = GetInputConfigByName(TEXT("Default")))
-		{
-			for (const FEnhancedActionKeyMapping& Mapping : DefaultConfig->GetPlayerMappableKeys())
-			{
-				// Make sure that the mapping has a valid name, its possible to have an empty name
-				// if someone has marked a mapping as "Player Mappable" but deleted the default field value
-				if (Mapping.GetMappingName() != NAME_None)
-				{
-					CustomKeyboardConfig.Add(Mapping.GetMappingName(), Mapping.Key);
-				}
-			}
-		}
-		
-		InputConfigName = TEXT("Custom");
-	} 
-
-	if (FKey* ExistingMapping = CustomKeyboardConfig.Find(MappingName))
-	{
-		// Change the key to the new one
-		CustomKeyboardConfig[MappingName] = NewKey;
-	}
-	else
-	{
-		CustomKeyboardConfig.Add(MappingName, NewKey);
-	}
-
-	// Tell the enhanced input subsystem for this local player that we should remap some input! Woo
-	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(LocalPlayer))
-	{
-		Subsystem->AddPlayerMappedKeyInSlot(MappingName, NewKey);
-	}
-}
-
-void USkyraSettingsLocal::ResetKeybindingToDefault(const FName MappingName, USkyraLocalPlayer* LocalPlayer)
-{
-	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(LocalPlayer))
-	{
-		Subsystem->RemoveAllPlayerMappedKeysForMapping(MappingName);
-	}
-}
-
-void USkyraSettingsLocal::ResetKeybindingsToDefault(USkyraLocalPlayer* LocalPlayer)
-{
-	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(LocalPlayer))
-	{
-		Subsystem->RemoveAllPlayerMappedKeys();
-	}
-}
-
-PRAGMA_ENABLE_DEPRECATION_WARNINGS
-
 void USkyraSettingsLocal::LoadUserControlBusMix()
 {
 	if (GEngine)
@@ -1684,6 +1589,13 @@ void USkyraSettingsLocal::UpdateGameModeDeviceProfileAndFps()
 					{
 						UE_LOG(LogConsoleResponse, Log, TEXT("Overriding device profile to %s"), *ActualProfileToApply);
 						Manager.SetOverrideDeviceProfile(NewDeviceProfile);
+
+						if (!bEnableScalabilitySettings)
+						{
+							// We don't support persistence of the scalability settings but at least we may
+							// provide up to date values if anybody queries them using the settings API.
+							ScalabilityQuality = Scalability::GetQualityLevels();
+						}
 					}
 				}
 			}

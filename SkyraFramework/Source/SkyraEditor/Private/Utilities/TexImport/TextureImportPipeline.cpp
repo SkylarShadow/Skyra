@@ -29,13 +29,14 @@ DECLARE_LOG_CATEGORY_EXTERN(MyLogInterchange, Log, All);
 
 DEFINE_LOG_CATEGORY(MyLogInterchange);
 
-void UTextureImportPipeline::AdjustSettingsForContext(EInterchangePipelineContext ImportType,
-                                                  TObjectPtr<UObject> ReimportAsset)
+void UTextureImportPipeline::AdjustSettingsForContext(const FInterchangePipelineContextParams& ContextParams)
 {
-	Super::AdjustSettingsForContext(ImportType, ReimportAsset);
+	Super::AdjustSettingsForContext(ContextParams);
 #if WITH_EDITOR
 	TArray<FString> HideCategories;
-	bool bIsObjectATexture = !ReimportAsset ? false : ReimportAsset.IsA(UTexture::StaticClass());
+	UObject* ReimportAsset = ContextParams.ReimportAsset.Get();
+	const EInterchangePipelineContext ImportType = ContextParams.ContextType;
+	bool bIsObjectATexture = !ReimportAsset ? false : ReimportAsset->IsA(UTexture::StaticClass());
 	if ((!bIsObjectATexture && ImportType == EInterchangePipelineContext::AssetReimport)
 		|| ImportType == EInterchangePipelineContext::AssetCustomLODImport
 		|| ImportType == EInterchangePipelineContext::AssetCustomLODReimport
@@ -325,7 +326,7 @@ UInterchangeTextureFactoryNode* UTextureImportPipeline::CreateTextureFactoryNode
 			return nullptr;
 		}
 		//Creating a Texture
-		TextureFactoryNode->InitializeTextureNode(NodeUid, DisplayLabel, TextureNode->GetDisplayLabel());
+		TextureFactoryNode->InitializeTextureNode(NodeUid, DisplayLabel, TextureNode->GetDisplayLabel(), BaseNodeContainer);
 		TextureFactoryNode->SetCustomTranslatedTextureNodeUid(TextureNode->GetUniqueID());
 		BaseNodeContainer->AddNode(TextureFactoryNode);
 		TextureFactoryNodes.Add(TextureFactoryNode);
@@ -428,7 +429,9 @@ void UTextureImportPipeline::PostImportTextureAssetImport(UObject* CreatedAsset,
 	bool bRunNormapMapDetection = !bIsAReimport && bDetectNormalMapTexture && !Texture->IsNormalMap();
   
 	// we probably got the info via Init() - if we didn't it's because it's compressed. Here we can decompress, so do it if needed.
-	bool bRunChannelScan = Source.GetLayerColorInfo().Num() == 0;
+	TArray<FTextureSourceLayerColorInfo> LayerColorInfo;
+	Source.GetLayerColorInfo(LayerColorInfo);
+	bool bRunChannelScan = LayerColorInfo.Num() == 0;
 
 
 	
