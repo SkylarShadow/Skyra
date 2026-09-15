@@ -51,6 +51,8 @@ bool USkyraAudioMixEffectsSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 
 void USkyraAudioMixEffectsSubsystem::PostInitialize()
 {
+	Super::PostInitialize();
+
 	if (const USkyraAudioSettings* SkyraAudioSettings = GetDefault<USkyraAudioSettings>())
 	{
 		if (UObject* ObjPath = SkyraAudioSettings->DefaultControlBusMix.TryLoad())
@@ -220,6 +222,8 @@ void USkyraAudioMixEffectsSubsystem::PostInitialize()
 
 void USkyraAudioMixEffectsSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
+	Super::OnWorldBeginPlay(InWorld);
+
 	if (const UWorld* World = InWorld.GetWorld())
 	{
 		// Activate the default base mix
