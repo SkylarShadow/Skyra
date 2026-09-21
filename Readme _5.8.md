@@ -6,11 +6,11 @@
 ### Project Settings
 
 #### Maps & Modes（可以根据项目实际需要）
-![alt text](image.png)
+![alt text](./Resources/Doc5_8/image.png)
 
 
 #### Gameplaytags
-![alt text](image-1.png)
+![alt text](./Resources/Doc5_8/image-1.png)
 可以 GameFeatures的Tags 或者例如StandardCharacter里的tag datatable
 
 #### AssetManager
@@ -29,36 +29,36 @@
 PrimaryAssetLabel Cook Rule = unknown
 
 #### CommonGame
-![alt text](image-18.png)
+![alt text](./Resources/Doc5_8/image-18.png)
 
 #### Common Input Settings
-![alt text](image-2.png)
+![alt text](./Resources/Doc5_8/image-2.png)
 
 #### Common Loading Screen 根据项目实际需求填写
-![alt text](image-3.png)
+![alt text](./Resources/Doc5_8/image-3.png)
 
 #### Game Features
-![alt text](image-4.png)
+![alt text](./Resources/Doc5_8/image-4.png)
 
 #### Gameplay Abilities Settings 根据项目实际需求填写 特别是GameCuePath
-![alt text](image-5.png)
+![alt text](./Resources/Doc5_8/image-5.png)
 
 ####
-![alt text](image-17.png)
+![alt text](./Resources/Doc5_8/image-17.png)
 
 #### SkyraAudioSettings
-![alt text](image-6.png)
+![alt text](./Resources/Doc5_8/image-6.png)
 
 #### SkyraContextEffects 根据项目实际需求填写
 参考lyra
-![alt text](image-7.png)
+![alt text](./Resources/Doc5_8/image-7.png)
 
 #### Audio
-![alt text](image-8.png)
+![alt text](./Resources/Doc5_8/image-8.png)
 
 #### Collision 
 这个不至于不会吧，参考lyra
-![alt text](image-9.png)
+![alt text](./Resources/Doc5_8/image-9.png)
 ```cpp
 #pragma once
 /**
@@ -84,28 +84,28 @@ PrimaryAssetLabel Cook Rule = unknown
 ```
 
 #### Enhanced Input
-![alt text](image-10.png)
+![alt text](./Resources/Doc5_8/image-10.png)
 
 #### GC
 Lyra关了这个，我要研究下是为什么
-![alt text](image-11.png)
+![alt text](./Resources/Doc5_8/image-11.png)
 
 #### General Settings
-![alt text](image-12.png)
+![alt text](./Resources/Doc5_8/image-12.png)
 
 #### Input
-![alt text](image-13.png)
+![alt text](./Resources/Doc5_8/image-13.png)
 可以去掉移动端虚拟按键
 bEnableLegacyInputScales =false可以处理鼠标移动上下翻转
 #### Interchange
-![alt text](image-14.png)
+![alt text](./Resources/Doc5_8/image-14.png)
 
 #### Physics
 参考lyra,也有一些其他好玩的可以调下
-![alt text](image-15.png)
+![alt text](./Resources/Doc5_8/image-15.png)
 
 ### Editor Settings
-![alt text](image-16.png)
+![alt text](./Resources/Doc5_8/image-16.png)
 也要在AssetManager添加
 
 
@@ -140,4 +140,4 @@ ForceFeedbackScale=1.0
 ```
 
 注意，如果项目需要依赖GameFeature并采用下面的设置方法，则会导致GameFeature的加载特性失效：
-![alt text](Resources/MarkdownImg/image-20.png)
+![alt text](Resources/MarkdownImg/./Resources/Doc5_8/image-20.png)
