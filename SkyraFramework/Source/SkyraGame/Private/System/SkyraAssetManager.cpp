@@ -11,6 +11,7 @@
 #include "Engine/Engine.h"
 #include "AbilitySystem/SkyraGameplayCueManager.h"
 #include "Misc/ScopedSlowTask.h"
+#include "SkyraAssetManagerSettings.h"
 #include "System/SkyraAssetManagerStartupJob.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(SkyraAssetManager)
@@ -134,12 +135,18 @@ void USkyraAssetManager::InitializeGameplayCueManager()
 
 const USkyraGameData& USkyraAssetManager::GetGameData()
 {
-	return GetOrLoadTypedGameData<USkyraGameData>(SkyraGameDataPath);
+	const TSoftObjectPtr<USkyraGameData>& SettingsGameDataPath = GetDefault<USkyraAssetManagerSettings>()->SkyraGameDataPath;
+	const TSoftObjectPtr<USkyraGameData>& GameDataPathToLoad = SettingsGameDataPath.IsNull() ? SkyraGameDataPath : SettingsGameDataPath;
+
+	return GetOrLoadTypedGameData<USkyraGameData>(GameDataPathToLoad);
 }
 
 const USkyraPawnData* USkyraAssetManager::GetDefaultPawnData() const
 {
-	return GetAsset(DefaultPawnData);
+	const TSoftObjectPtr<USkyraPawnData>& SettingsDefaultPawnData = GetDefault<USkyraAssetManagerSettings>()->DefaultPawnData;
+	const TSoftObjectPtr<USkyraPawnData>& DefaultPawnDataToLoad = SettingsDefaultPawnData.IsNull() ? DefaultPawnData : SettingsDefaultPawnData;
+
+	return GetAsset(DefaultPawnDataToLoad);
 }
 
 UPrimaryDataAsset* USkyraAssetManager::LoadGameDataOfClass(TSubclassOf<UPrimaryDataAsset> DataClass, const TSoftObjectPtr<UPrimaryDataAsset>& DataClassPath, FPrimaryAssetType PrimaryAssetType)

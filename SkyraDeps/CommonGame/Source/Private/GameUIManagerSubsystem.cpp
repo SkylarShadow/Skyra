@@ -3,6 +3,7 @@
 #include "GameUIManagerSubsystem.h"
 
 #include "Engine/GameInstance.h"
+#include "CommonGameSettings.h"
 #include "GameUIPolicy.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GameUIManagerSubsystem)
@@ -14,9 +15,12 @@ void UGameUIManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 
-	if (!CurrentPolicy && !DefaultUIPolicyClass.IsNull())
+	const TSoftClassPtr<UGameUIPolicy>& SettingsPolicyClass = GetDefault<UCommonGameSettings>()->DefaultUIPolicyClass;
+	const TSoftClassPtr<UGameUIPolicy>& PolicyClassToLoad = SettingsPolicyClass.IsNull() ? DefaultUIPolicyClass : SettingsPolicyClass;
+
+	if (!CurrentPolicy && !PolicyClassToLoad.IsNull())
 	{
-		TSubclassOf<UGameUIPolicy> PolicyClass = DefaultUIPolicyClass.LoadSynchronous();
+		TSubclassOf<UGameUIPolicy> PolicyClass = PolicyClassToLoad.LoadSynchronous();
 		SwitchToPolicy(NewObject<UGameUIPolicy>(this, PolicyClass));
 	}
 }

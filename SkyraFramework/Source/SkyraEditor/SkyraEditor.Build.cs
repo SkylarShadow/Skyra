@@ -10,25 +10,21 @@ public class SkyraEditor : ModuleRules
 
 		PublicIncludePaths.AddRange(
 			new string[] {
-				"$(ModuleDir)/Public",
-				"$(ModuleDir)/Public/AssetType",				
-				"$(ModuleDir)/Public/Factory",			
-				"$(ModuleDir)/Public/Inventory",						
-				"$(ModuleDir)/Public/Style",			
-				"$(ModuleDir)/Public/Validation",
-				"$(ModuleDir)/Public/Commandlets",
+				ModuleDirectory + "/Public",
+				ModuleDirectory + "/Public/Commandlets",
+				ModuleDirectory + "/Public/Utilities",
+				ModuleDirectory + "/Public/Utilities/TexImport",
+				ModuleDirectory + "/Public/Validation",
 			}
 		);
 
 		PrivateIncludePaths.AddRange(
 			new string[] {
-				"$(ModuleDir)/Public",
-				"$(ModuleDir)/Public/AssetType",				
-				"$(ModuleDir)/Public/Factory",			
-				"$(ModuleDir)/Public/Inventory",						
-				"$(ModuleDir)/Public/Style",			
-				"$(ModuleDir)/Public/Validation",
-				"$(ModuleDir)/Public/Commandlets",
+				ModuleDirectory + "/Public",
+				ModuleDirectory + "/Public/Commandlets",
+				ModuleDirectory + "/Public/Utilities",
+				ModuleDirectory + "/Public/Utilities/TexImport",
+				ModuleDirectory + "/Public/Validation",
 			}
 		);
 
