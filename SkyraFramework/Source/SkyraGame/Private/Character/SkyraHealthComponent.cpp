@@ -112,6 +112,82 @@ void USkyraHealthComponent::ClearGameplayTags()
 	}
 }
 
+bool USkyraHealthComponent::CanChangeDeathState(ESkyraDeathState NewDeathState) const
+{
+	if (DeathState == NewDeathState)
+	{
+		return true;
+	}
+
+	switch (NewDeathState)
+	{
+	case ESkyraDeathState::NotDead:
+		return GetHealth() > 0.0f;
+
+	case ESkyraDeathState::DeathStarted:
+		return DeathState == ESkyraDeathState::NotDead;
+
+	case ESkyraDeathState::DeathFinished:
+		return DeathState == ESkyraDeathState::DeathStarted;
+
+	default:
+		return false;
+	}
+}
+
+void USkyraHealthComponent::ApplyDeathState(ESkyraDeathState NewDeathState)
+{
+	if (DeathState == NewDeathState)
+	{
+		return;
+	}
+
+	DeathState = NewDeathState;
+
+	if (AbilitySystemComponent)
+	{
+		if (NewDeathState == ESkyraDeathState::NotDead)
+		{
+			ClearGameplayTags();
+		}
+		else if (NewDeathState == ESkyraDeathState::DeathStarted)
+		{
+			AbilitySystemComponent->SetLooseGameplayTagCount(SkyraGameplayTags::Status_Death_Dying, 1);
+		}
+		else if (NewDeathState == ESkyraDeathState::DeathFinished)
+		{
+			AbilitySystemComponent->SetLooseGameplayTagCount(SkyraGameplayTags::Status_Death_Dead, 1);
+		}
+	}
+
+	AActor* Owner = GetOwner();
+	check(Owner);
+
+	if (NewDeathState == ESkyraDeathState::DeathStarted)
+	{
+		OnDeathStarted.Broadcast(Owner);
+	}
+	else if (NewDeathState == ESkyraDeathState::DeathFinished)
+	{
+		OnDeathFinished.Broadcast(Owner);
+	}
+
+	Owner->ForceNetUpdate();
+}
+
+bool USkyraHealthComponent::SetDeathState(ESkyraDeathState NewDeathState)
+{
+	if (!CanChangeDeathState(NewDeathState))
+	{
+		UE_LOG(LogSkyra, Warning, TEXT("SkyraHealthComponent: Invalid death transition [%d] -> [%d] for owner [%s]."),
+			(uint8)DeathState, (uint8)NewDeathState, *GetNameSafe(GetOwner()));
+		return false;
+	}
+
+	ApplyDeathState(NewDeathState);
+	return true;
+}
+
 float USkyraHealthComponent::GetHealth() const
 {
 	return (HealthSet ? HealthSet->GetHealth() : 0.0f);
@@ -194,6 +270,12 @@ void USkyraHealthComponent::OnRep_DeathState(ESkyraDeathState OldDeathState)
 	// Revert the death state for now since we rely on StartDeath and FinishDeath to change it.
 	DeathState = OldDeathState;
 
+	if (NewDeathState == ESkyraDeathState::NotDead)
+	{
+		ApplyDeathState(NewDeathState);
+		return;
+	}
+
 	if (OldDeathState > NewDeathState)
 	{
 		// The server is trying to set us back but we've already predicted past the server state.
@@ -234,46 +316,12 @@ void USkyraHealthComponent::OnRep_DeathState(ESkyraDeathState OldDeathState)
 
 void USkyraHealthComponent::StartDeath()
 {
-	if (DeathState != ESkyraDeathState::NotDead)
-	{
-		return;
-	}
-
-	DeathState = ESkyraDeathState::DeathStarted;
-
-	if (AbilitySystemComponent)
-	{
-		AbilitySystemComponent->SetLooseGameplayTagCount(SkyraGameplayTags::Status_Death_Dying, 1);
-	}
-
-	AActor* Owner = GetOwner();
-	check(Owner);
-
-	OnDeathStarted.Broadcast(Owner);
-
-	Owner->ForceNetUpdate();
+	SetDeathState(ESkyraDeathState::DeathStarted);
 }
 
 void USkyraHealthComponent::FinishDeath()
 {
-	if (DeathState != ESkyraDeathState::DeathStarted)
-	{
-		return;
-	}
-
-	DeathState = ESkyraDeathState::DeathFinished;
-
-	if (AbilitySystemComponent)
-	{
-		AbilitySystemComponent->SetLooseGameplayTagCount(SkyraGameplayTags::Status_Death_Dead, 1);
-	}
-
-	AActor* Owner = GetOwner();
-	check(Owner);
-
-	OnDeathFinished.Broadcast(Owner);
-	
-	Owner->ForceNetUpdate();
+	SetDeathState(ESkyraDeathState::DeathFinished);
 }
 
 void USkyraHealthComponent::DamageSelfDestruct(bool bFellOutOfWorld)

@@ -75,6 +75,10 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Skyra|Health", Meta = (ExpandBoolAsExecs = "ReturnValue"))
 	bool IsDeadOrDying() const { return (DeathState > ESkyraDeathState::NotDead); }
 
+	// Changes the death state through the health state machine.
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Skyra|Health")
+	bool SetDeathState(ESkyraDeathState NewDeathState);
+
 	// Begins the death sequence for the owner.
 	virtual void StartDeath();
 
@@ -107,6 +111,8 @@ protected:
 	virtual void OnUnregister() override;
 
 	void ClearGameplayTags();
+	bool CanChangeDeathState(ESkyraDeathState NewDeathState) const;
+	void ApplyDeathState(ESkyraDeathState NewDeathState);
 
 	virtual void HandleHealthChanged(AActor* DamageInstigator, AActor* DamageCauser, const FGameplayEffectSpec* DamageEffectSpec, float DamageMagnitude, float OldValue, float NewValue);
 	virtual void HandleMaxHealthChanged(AActor* DamageInstigator, AActor* DamageCauser, const FGameplayEffectSpec* DamageEffectSpec, float DamageMagnitude, float OldValue, float NewValue);
