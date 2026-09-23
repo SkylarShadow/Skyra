@@ -41,7 +41,7 @@ public:
 	ASkyraGameMode(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 	UFUNCTION(BlueprintCallable, Category = "Skyra|Pawn")
-	const USkyraPawnData* GetPawnDataForController(const AController* InController) const;
+	virtual const USkyraPawnData* GetPawnDataForController(const AController* InController) const;
 
 	//~AGameModeBase interface
 	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;

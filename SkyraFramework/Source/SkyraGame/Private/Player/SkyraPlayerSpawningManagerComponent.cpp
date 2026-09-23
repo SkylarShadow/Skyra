@@ -115,7 +115,10 @@ AActor* USkyraPlayerSpawningManagerComponent::ChoosePlayerStart(AController* Pla
 
 		if (ASkyraPlayerStart* SkyraStart = Cast<ASkyraPlayerStart>(PlayerStart))
 		{
-			SkyraStart->TryClaim(Player);
+			if (ShouldClaimPlayerStart(Player, SkyraStart) && SkyraStart->TryClaim(Player))
+			{
+				OnPlayerStartClaimed(Player, SkyraStart);
+			}
 		}
 
 		return PlayerStart;
@@ -150,13 +153,24 @@ APlayerStart* USkyraPlayerSpawningManagerComponent::FindPlayFromHereStart(AContr
 }
 #endif
 
-bool USkyraPlayerSpawningManagerComponent::ControllerCanRestart(AController* Player)
+AActor* USkyraPlayerSpawningManagerComponent::OnChoosePlayerStart_Implementation(AController* Player, const TArray<ASkyraPlayerStart*>& PlayerStarts)
 {
-	bool bCanRestart = true;
+	return nullptr;
+}
 
-	// TODO Can they restart?
+bool USkyraPlayerSpawningManagerComponent::ControllerCanRestart(AController* Player) const
+{
+	return OnControllerCanRestart(Player);
+}
 
-	return bCanRestart;
+bool USkyraPlayerSpawningManagerComponent::OnControllerCanRestart_Implementation(AController* Player) const
+{
+	return true;
+}
+
+bool USkyraPlayerSpawningManagerComponent::ShouldClaimPlayerStart_Implementation(AController* Player, ASkyraPlayerStart* PlayerStart) const
+{
+	return true;
 }
 
 void USkyraPlayerSpawningManagerComponent::FinishRestartPlayer(AController* NewPlayer, const FRotator& StartRotation)

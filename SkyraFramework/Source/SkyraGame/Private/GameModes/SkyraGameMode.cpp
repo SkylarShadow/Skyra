@@ -85,7 +85,7 @@ void ASkyraGameMode::InitGame(const FString& MapName, const FString& Options, FS
 	// Wait for the next frame to give time to initialize startup settings
 	GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ThisClass::HandleMatchAssignmentIfNotExpectingOne);
 }
-
+//负责决定本局要加载哪个 Experience
 void ASkyraGameMode::HandleMatchAssignmentIfNotExpectingOne()
 {
 	FPrimaryAssetId ExperienceId;
@@ -163,9 +163,10 @@ void ASkyraGameMode::HandleMatchAssignmentIfNotExpectingOne()
 		ExperienceIdSource = TEXT("Default");
 	}
 
-	OnMatchAssignmentGiven(ExperienceId, ExperienceIdSource);
+	OnMatchAssignmentGiven(ExperienceId, ExperienceIdSource); //真正加载 Experience
 }
 
+//DS逻辑
 bool ASkyraGameMode::TryDedicatedServerLogin()
 {
 	// Some basic code to register as an active dedicated server, this would be heavily modified by the game
@@ -181,7 +182,7 @@ bool ASkyraGameMode::TryDedicatedServerLogin()
 		UserSubsystem->OnUserInitializeComplete.AddDynamic(this, &ASkyraGameMode::OnUserInitializedForDedicatedServer);
 
 		// There are no local users on dedicated server, but index 0 means the default platform user which is handled by the online login code
-		if (!UserSubsystem->TryToLoginForOnlinePlay(0))
+		if (!UserSubsystem->TryToLoginForOnlinePlay(0)) //尝试通过 UCommonUserSubsystem 做在线登录
 		{
 			OnUserInitializedForDedicatedServer(nullptr, false, FText(), ECommonUserPrivilege::CanPlayOnline, ECommonUserOnlineContext::Default);
 		}
@@ -192,6 +193,7 @@ bool ASkyraGameMode::TryDedicatedServerLogin()
 	return false;
 }
 
+//Dedicated Server 登录后，创建并托管一个在线会话
 void ASkyraGameMode::HostDedicatedServerMatch(ECommonSessionOnlineMode OnlineMode)
 {
 	FPrimaryAssetType UserExperienceType = USkyraUserFacingExperienceDefinition::StaticClass()->GetFName();
@@ -351,7 +353,7 @@ APawn* ASkyraGameMode::SpawnDefaultPawnAtTransform_Implementation(AController* N
 	SpawnInfo.Instigator = GetInstigator();
 	SpawnInfo.ObjectFlags |= RF_Transient;	// Never save the default player pawns into a map.
 	SpawnInfo.bDeferConstruction = true;
-	// TODO: PawnClass 要支持前端选择角色，注意下可能要结合PawnData ,emm 考虑在GetDefaultPawnClassForController_Implementation 实现仅更换模型
+	// TODO: PawnClass 要支持前端选择角色，注意下可能要结合PawnData 
 	if (UClass* PawnClass = GetDefaultPawnClassForController(NewPlayer))
 	{
 		if (APawn* SpawnedPawn = GetWorld()->SpawnActor<APawn>(PawnClass, SpawnTransform, SpawnInfo))
