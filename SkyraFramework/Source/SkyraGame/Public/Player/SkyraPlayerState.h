@@ -65,6 +65,7 @@ public:
 	template <class T>
 	const T* GetPawnData() const { return Cast<T>(PawnData); }
 
+    UFUNCTION(BlueprintCallable, Category = "Skyra|PlayerState")
 	void SetPawnData(const USkyraPawnData* InPawnData);
 
 	//~AActor interface

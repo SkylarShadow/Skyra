@@ -21,7 +21,7 @@ void USkyraSettingScreen::NativeOnInitialized()
 
 UGameSettingRegistry* USkyraSettingScreen::CreateRegistry()
 {
-	USkyraGameSettingRegistry* NewRegistry = NewObject<USkyraGameSettingRegistry>();
+	USkyraGameSettingRegistry* NewRegistry = NewObject<USkyraGameSettingRegistry>(); // 拼菜单树
 
 	if (USkyraLocalPlayer* LocalPlayer = CastChecked<USkyraLocalPlayer>(GetOwningLocalPlayer()))
 	{

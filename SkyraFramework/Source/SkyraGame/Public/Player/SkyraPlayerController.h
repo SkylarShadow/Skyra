@@ -96,6 +96,7 @@ public:
 	virtual FOnSkyraTeamIndexChangedDelegate* GetOnTeamIndexChangedDelegate() override;
 	//~End of ISkyraTeamAgentInterface interface
 
+    // TODO: 处理对于AutoRun的依赖
 	UFUNCTION(BlueprintCallable, Category = "Skyra|Character")
 	void SetIsAutoRunning(const bool bEnabled);
 
