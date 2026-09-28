@@ -66,6 +66,10 @@ public:
 	//~ End UObject interface
 
 private:
+    // If true, only the primary local player receives these layout and widget entries.
+    UPROPERTY(EditAnywhere, Category=UI)
+    bool bOnlyAddToPrimaryLocalPlayer = false;
+    
 	// Layout to add to the HUD
 	UPROPERTY(EditAnywhere, Category=UI, meta=(TitleProperty="{LayerID} -> {LayoutClass}"))
 	TArray<FSkyraHUDLayoutRequest> Layout;

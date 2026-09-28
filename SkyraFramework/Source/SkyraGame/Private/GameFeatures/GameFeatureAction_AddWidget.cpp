@@ -144,12 +144,17 @@ void UGameFeatureAction_AddWidgets::AddWidgets(AActor* Actor, FPerContextData& A
 		return;
 	}
 
-	if (ULocalPlayer* LocalPlayer = Cast<ULocalPlayer>(HUD->GetOwningPlayerController()->Player))
-	{
-		FPerActorData& ActorData = ActiveData.ActorData.FindOrAdd(HUD);
+    if (ULocalPlayer* LocalPlayer = Cast<ULocalPlayer>(HUD->GetOwningPlayerController()->Player))
+    {
+        if (bOnlyAddToPrimaryLocalPlayer && !LocalPlayer->IsPrimaryPlayer())
+        {
+            return;
+        }
 
-		for (const FSkyraHUDLayoutRequest& Entry : Layout)
-		{
+        FPerActorData& ActorData = ActiveData.ActorData.FindOrAdd(HUD);
+
+        for (const FSkyraHUDLayoutRequest& Entry : Layout)
+        {
 			//TSubclassOf<UCommonActivatableWidget> ConcreteWidgetClass = Entry.LayoutClass.Get() // 这个方式对GameFeature->Game/Content不是很友好，会出现加载不了的情况，暂时改为下面这种
 			if (TSubclassOf<UCommonActivatableWidget> ConcreteWidgetClass = Entry.LayoutClass.LoadSynchronous())
 			{
