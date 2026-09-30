@@ -45,14 +45,50 @@ ASkyraGameMode::ASkyraGameMode(const FObjectInitializer& ObjectInitializer)
 
 const USkyraPawnData* ASkyraGameMode::GetPawnDataForController(const AController* InController) const
 {
+	const USkyraPawnData* PawnData = nullptr;
+	ResolvePawnDataForController(InController, PawnData);
+	return PawnData;
+}
+
+ESkyraPawnDataResult ASkyraGameMode::ResolvePawnDataForController(
+	const AController* InController,
+	const USkyraPawnData*& OutPawnData) const
+{
 	// See if pawn data is already set on the player state
+	OutPawnData = nullptr;
 	if (InController != nullptr)
 	{
 		if (const ASkyraPlayerState* SkyraPS = InController->GetPlayerState<ASkyraPlayerState>())
 		{
 			if (const USkyraPawnData* PawnData = SkyraPS->GetPawnData<USkyraPawnData>())
 			{
-				return PawnData;
+				OutPawnData = PawnData;
+				return ESkyraPawnDataResult::Custom;
+			}
+		}
+	}
+
+	if (GameState)
+	{
+		if (const USkyraPlayerSpawningManagerComponent* PlayerSpawningComponent =
+			GameState->FindComponentByClass<USkyraPlayerSpawningManagerComponent>())
+		{
+			const USkyraPawnData* PawnData = nullptr;
+			const ESkyraPawnDataResult Result =
+				PlayerSpawningComponent->ResolvePawnDataForController(InController, PawnData);
+			if (Result == ESkyraPawnDataResult::Custom)
+			{
+				if (PawnData)
+				{
+					OutPawnData = PawnData;
+					return ESkyraPawnDataResult::Custom;
+				}
+
+				UE_LOG(LogSkyra, Warning, TEXT("PlayerSpawningComponent returned Custom PawnData result without PawnData for controller [%s]. Falling back to default PawnData."), *GetNameSafe(InController));
+			}
+			else if (Result == ESkyraPawnDataResult::Defer)
+			{
+				return ESkyraPawnDataResult::Defer;
 			}
 		}
 	}
@@ -67,15 +103,20 @@ const USkyraPawnData* ASkyraGameMode::GetPawnDataForController(const AController
 		const USkyraExperienceDefinition* Experience = ExperienceComponent->GetCurrentExperienceChecked();
 		if (Experience->DefaultPawnData != nullptr)
 		{
-			return Experience->DefaultPawnData;
+			OutPawnData = Experience->DefaultPawnData;
+			return ESkyraPawnDataResult::Default;
 		}
 
 		// Experience is loaded and there's still no pawn data, fall back to the default for now
-		return USkyraAssetManager::Get().GetDefaultPawnData();
+		OutPawnData = USkyraAssetManager::Get().GetDefaultPawnData();
+		if (OutPawnData)
+		{
+			return ESkyraPawnDataResult::Default;
+		}
 	}
 
 	// Experience not loaded yet, so there is no pawn data to be had
-	return nullptr;
+	return ESkyraPawnDataResult::Default;
 }
 
 void ASkyraGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)

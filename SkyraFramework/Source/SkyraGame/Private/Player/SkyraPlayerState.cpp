@@ -112,9 +112,16 @@ void ASkyraPlayerState::OnExperienceLoaded(const USkyraExperienceDefinition* /*C
 {
 	if (ASkyraGameMode* SkyraGameMode = GetWorld()->GetAuthGameMode<ASkyraGameMode>())
 	{
-		if (const USkyraPawnData* NewPawnData = SkyraGameMode->GetPawnDataForController(GetOwningController()))
+		const USkyraPawnData* NewPawnData = nullptr;
+		const ESkyraPawnDataResult PawnDataResult =
+			SkyraGameMode->ResolvePawnDataForController(GetOwningController(), NewPawnData);
+		if (NewPawnData)
 		{
 			SetPawnData(NewPawnData);
+		}
+		else if (PawnDataResult == ESkyraPawnDataResult::Defer)
+		{
+			UE_LOG(LogSkyra, Verbose, TEXT("ASkyraPlayerState::OnExperienceLoaded(): PawnData initialization deferred for player state [%s]."), *GetNameSafe(this));
 		}
 		else
 		{

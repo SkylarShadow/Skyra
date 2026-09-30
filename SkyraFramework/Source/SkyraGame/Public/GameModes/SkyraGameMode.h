@@ -3,6 +3,7 @@
 #pragma once
 
 #include "ModularGameMode.h"
+#include "Player/SkyraPlayerSpawningManagerComponent.h"
 
 #include "SkyraGameMode.generated.h"
 
@@ -41,7 +42,11 @@ public:
 	ASkyraGameMode(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 	UFUNCTION(BlueprintCallable, Category = "Skyra|Pawn")
-	virtual const USkyraPawnData* GetPawnDataForController(const AController* InController) const;
+	const USkyraPawnData* GetPawnDataForController(const AController* InController) const;
+
+	ESkyraPawnDataResult ResolvePawnDataForController(
+		const AController* InController,
+		const USkyraPawnData*& OutPawnData) const;
 
 	//~AGameModeBase interface
 	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;

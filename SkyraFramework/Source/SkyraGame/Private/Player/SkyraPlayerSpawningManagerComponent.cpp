@@ -168,6 +168,22 @@ bool USkyraPlayerSpawningManagerComponent::OnControllerCanRestart_Implementation
 	return true;
 }
 
+ESkyraPawnDataResult USkyraPlayerSpawningManagerComponent::ResolvePawnDataForController(
+	const AController* Player,
+	const USkyraPawnData*& OutPawnData) const
+{
+	OutPawnData = nullptr;
+	return ResolvePawnDataForController_Implementation(Player, OutPawnData);
+}
+
+ESkyraPawnDataResult USkyraPlayerSpawningManagerComponent::ResolvePawnDataForController_Implementation(
+	const AController* Player,
+	const USkyraPawnData*& OutPawnData) const
+{
+	OutPawnData = nullptr;
+	return ESkyraPawnDataResult::Default;
+}
+
 bool USkyraPlayerSpawningManagerComponent::ShouldClaimPlayerStart_Implementation(AController* Player, ASkyraPlayerStart* PlayerStart) const
 {
 	return true;

@@ -12,6 +12,15 @@ class APlayerState;
 class APlayerStart;
 class ASkyraPlayerStart;
 class AActor;
+class USkyraPawnData;
+
+UENUM(BlueprintType)
+enum class ESkyraPawnDataResult : uint8
+{
+	Default,
+	Defer,
+	Custom
+};
 
 /**
  * @class USkyraPlayerSpawningManagerComponent
@@ -33,6 +42,9 @@ public:
 	AActor* ChoosePlayerStart(AController* Player);
 	bool ControllerCanRestart(AController* Player) const;
 	void FinishRestartPlayer(AController* NewPlayer, const FRotator& StartRotation);
+	ESkyraPawnDataResult ResolvePawnDataForController(
+		const AController* Player,
+		const USkyraPawnData*& OutPawnData) const;
 
 protected:
 	// Utility
@@ -46,6 +58,10 @@ protected:
 	UFUNCTION(BlueprintNativeEvent, BlueprintAuthorityOnly, Category="Skyra|Spawning")
 	bool OnControllerCanRestart(AController* Player) const;
 	virtual bool OnControllerCanRestart_Implementation(AController* Player) const;
+
+	virtual ESkyraPawnDataResult ResolvePawnDataForController_Implementation(
+		const AController* Player,
+		const USkyraPawnData*& OutPawnData) const;
 
 	virtual void OnFinishRestartPlayer(AController* Player, const FRotator& StartRotation) { }
 
