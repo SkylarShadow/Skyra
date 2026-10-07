@@ -44,6 +44,10 @@ public:
 	//@TODO: Make soft?
 	UPROPERTY(EditDefaultsOnly, Category=Gameplay)
 	TObjectPtr<const USkyraPawnData> DefaultPawnData;
+    
+    // 新增一些备用PawnData
+    UPROPERTY(EditDefaultsOnly, Category=Gameplay)
+    TArray<TSoftObjectPtr<const USkyraPawnData>> AvailablePawnData;
 
 	// List of actions to perform as this experience is loaded/activated/deactivated/unloaded
 	// 这个experience在加载/激活/停用/卸载时要执行的操作列表

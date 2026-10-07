@@ -6,7 +6,6 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "SkyraBlueprintFunctionLibrary.generated.h"
 
-//class ASkyraCharacter;
 /**
  * 
  */
@@ -14,7 +13,18 @@ UCLASS()
 class SKYRAGAME_API USkyraBlueprintFunctionLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
-	
-	// UFUNCTION(BlueprintCallable,BlueprintPure, Category = "Skyra|Ability")
-	// static ASkyraCharacter* GetSkyraCharacterFromActorInfo(const USkyraGameplayAbility* SkyraGA);
+
+public:
+	UFUNCTION(BlueprintPure, Category = "Skyra|Build")
+	static bool IsShippingBuild();
+
+	UFUNCTION(BlueprintPure, Category = "Skyra|Build")
+	static bool IsDevelopmentBuild();
+
+	UFUNCTION(BlueprintPure, Category = "Skyra|Build")
+	static bool IsDebugBuild();
+
+	UFUNCTION(BlueprintPure, Category = "Skyra|Build")
+	static bool IsEditor();
+
 };
