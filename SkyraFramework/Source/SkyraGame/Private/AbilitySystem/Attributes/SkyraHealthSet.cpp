@@ -145,7 +145,15 @@ void USkyraHealthSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 		}
 
 		// Convert into -Health and then clamp
-		SetHealth(FMath::Clamp(GetHealth() - GetDamage(), MinimumHealth, GetMaxHealth()));
+		//SetHealth(FMath::Clamp(GetHealth() - GetDamage(), MinimumHealth, GetMaxHealth()));
+	    if (bIsDamageFromSelfDestruct)
+	    {
+	        SetHealth(0.0f);
+	    }
+	    else
+	    {
+	        SetHealth(FMath::Clamp(GetHealth() - GetDamage(), MinimumHealth, GetMaxHealth()));
+	    }
 		SetDamage(0.0f);
 	}
 	else if (Data.EvaluatedData.Attribute == GetHealingAttribute())
